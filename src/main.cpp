@@ -19,6 +19,8 @@ ArtnetWifi artnet;
 uint32_t universe1 = 1;
 uint32_t universe2;
 
+int address = 1;
+
 int timemultiplier = 118; // This times delay or duration == time on or off
 WebServer server(80);
 
@@ -37,7 +39,7 @@ void callback(uint8_t* data, uint16_t size) {
 }
 
 void handleADC() {
-    int a = GetTemp(analogRead(A0));
+    int a = GetTemp(analogRead(THERMISTORPIN));
     String adcVAlue = String(a);
 
     server.send(200, "text/plain", adcVAlue);
@@ -157,6 +159,12 @@ void onDmxFrame(uint16_t universe, uint16_t length, uint8_t sequence, uint8_t* d
 
     // send out the buffer
     for (uint16_t i = 0; i < length; i++) {
+        if (i == address) {
+            NVS.setInt("dur", data[i]);
+        }
+        if (i == address + 1) {
+            NVS.setInt("del", data[i]);
+        }
         Serial.print(data[i], HEX);
         Serial.print(" ");
     }
@@ -209,7 +217,7 @@ void setup(void) {
 
     Serial.println("Booting...");
 
-    int address = 1;
+    address = 1;
 
     artnet.setArtDmxCallback(onDmxFrame);
     artnet.begin();
@@ -246,7 +254,7 @@ void runFog() {
         if (currentMillis - previousMillis >= 100 * NVS.getInt("del")) {
             // Save the last time LED blinked
             previousMillis = currentMillis;
-            Serial.println("TEST");
+            //Serial.println("TEST");
             fogOn();
             allowed = 0;
         }
@@ -269,16 +277,16 @@ void loop() {
     } else if (t < 0) {
         digitalWrite(heatPin, LOW);
         digitalWrite(blowPin, LOW);
-        Serial.println("ERROR - Under Temp");
+        Serial.println("FOG OFF: Under Temp");
     } else {
         digitalWrite(heatPin, LOW);
         digitalWrite(blowPin, LOW);
-        Serial.println("ERROR - Over Temp");
+        Serial.println("FOG OFF: Over Temp");
     }
 
     ArduinoOTA.handle();
     server.handleClient();
     artnet.read();
 
-    delay(1);
+    delay(300);
 }

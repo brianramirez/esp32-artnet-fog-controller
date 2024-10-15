@@ -1,3 +1,4 @@
+
 const char MAIN_page[] PROGMEM = R"=====(
 <!DOCTYPE html>
 <html>
@@ -62,7 +63,7 @@ const char MAIN_page[] PROGMEM = R"=====(
 <div class="card">
   <h4>Fog Machine Temp:  <span id="ADCValue">--</span></h4><br>
   <h1><div class="slidecontainer">
-  dur: <input type="range" min="1" max="255" value="50" class="slider" id="DURValue"><span id="dur">--</span>
+  Duration: <input type="range" min="1" max="255" value="50" class="slider" id="DURValue"><span id="dur">--</span>
 </div></h1><br>
   <h1><div class="slidecontainer">
   Delay: <input type="range" min="1" max="255" value="50" class="slider" id="DELValue"><span id="del">--</span>

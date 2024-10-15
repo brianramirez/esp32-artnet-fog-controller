@@ -9,12 +9,12 @@
 const char* ssid = "Hogwarts WiFi";
 const char* password = "qiT8aNzbg7Fk3KrFvwctAPDPZ";
 // which analog pin to connect
-#define THERMISTORPIN 35
+#define THERMISTORPIN 1
 #define blowPin 17
 #define heatPin 33
 
 // resistance at 25 degrees C
-#define THERMISTORNOMINAL 10000
+#define THERMISTORNOMINAL 100000
 // temp. for nominal resistance (almost always 25 C)
 #define TEMPERATURENOMINAL 15//25=96, 0=48, 20=88, 15=
 // how many samples to take and average, more takes longer
@@ -23,19 +23,41 @@ const char* password = "qiT8aNzbg7Fk3KrFvwctAPDPZ";
 // The beta coefficient of the thermistor (usually 3000-4000)
 #define BCOEFFICIENT 3950//4066 //3950
 // the value of the 'other' resistor
-#define SERIESRESISTOR 10000
+#define SERIESRESISTOR 100000
 
 int samples[NUMSAMPLES];
 // -- Initial name of the Thing. Used e.g. as SSID of the own Access Point.
 const char thingName[] = "FogMachine";
 const int numReadings = 20;
 
+const float resistorRef = 100000;
+const float voltageRef = 3.3;
+const float nominalTemp = 25;
+const float nominalResistance = 100000;
+const float betaCoefficient = 3950;
+
 float readings[numReadings];      // the readings from the analog input
 int readIndex = 0;              // the index of the current reading
 float total = 0;                  // the running total
 float average = 0;                // the average
 
-int inputPin = A0;
+int inputPin = THERMISTORPIN;
+
+float GetTempBeta(float Vo) {
+    float voltage = (Vo * voltageRef) / 4095.0; // Calculate voltage
+    float resistance = (voltage * resistorRef) / (voltageRef - voltage); // Calculate thermistor resistance with updated config
+
+    // Calculate temp using Beta param equation
+    float tempK = 1 / (((log(resistance / nominalResistance)) / betaCoefficient) + (1 / (nominalTemp + 273.15)));
+
+    float tempC = tempK - 273.15;
+    float tempF = (1.8 * tempC) + 32.0;
+
+//    Serial.println(tempK);
+//    Serial.println(tempC);
+//    Serial.println(tempF);
+    return tempF;
+}
 
 float GetTemp(float Vo) {
 
@@ -46,6 +68,10 @@ float GetTemp(float Vo) {
     T = (1.0 / (A + B * logRt + C * logRt * logRt * logRt)); // We get the temperature value in Kelvin from this Stein-Hart equation
     Tc = T - 273.15;                     // Convert Kelvin to Celsius
     Tf = (Tc * 1.8) + 32.0;   // Convert Kelvin to Fahrenheit
+
+//    Serial.println(T);
+//    Serial.println(Tc);
+//    Serial.println(Tf);
 
     return Tf;
 }
@@ -68,7 +94,8 @@ float avg(){
     // calculate the average:
     average = total / numReadings;
     // send it to the computer as ASCII digits
-    return GetTemp(average);
+    //return GetTemp(average);
+    return GetTempBeta(average);
 }
 
 float c2f(float c) {
@@ -80,10 +107,6 @@ float getlog(float in) {
     return (x);
 
 }
-
-
-
-
 
 void setupOta() {
     // Port defaults to 3232
